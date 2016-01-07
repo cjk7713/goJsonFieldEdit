@@ -59,7 +59,7 @@ const listTpl = `<!DOCTYPE html>
 			</tr>
 		</thead>
 		<tbody>
-			{{range $k, $v := .services}}
+			{{range $k, $v := .Services}}
 			<tr>
 				<td>{{$k}}</td>
 				<td><a href="{{$v}}" target="_blank">{{$v}}</a>
