@@ -111,6 +111,7 @@ func saveRegisterService() {
 		logger.Println(err)
 		return
 	}
+	defer fh.Close()
 	_, err = fh.Write(content)
 	if err != nil {
 		logger.Println(err)
