@@ -31,13 +31,42 @@ const listTpl = `<!DOCTYPE html>
 	<head>
 		<meta charset="UTF-8">
 		<title>服务列表</title>
+		<style type="text/css">
+			table {
+				border-style: solid;
+				border-width: 1px;
+				border-collapse: collapse;
+			}
+			td, th {
+				border-style: solid;
+				border-width: 1px;
+				border-color: #BFE0EC;
+				padding: 0.2em 0.5em;
+			}
+			th {
+				background-color: #E5F2F7;
+				color: #205F8E;
+			}
+		</style>
 	</head>
 	<body>
-	{{range $k, $v := .Services}}
-		<div>
-			<label>{{$k}}</label>: <a href="{{$v}}" target="_blank">{{$v}}</a>
-		</div>
-	{{end}}
+	<h3>服务列表</h3>
+	<table>
+		<thead>
+			<tr>
+				<th>服务名称</th>
+				<th>服务地址</th>
+			</tr>
+		</thead>
+		<tbody>
+			{{range $k, $v := .services}}
+			<tr>
+				<td>{{$k}}</td>
+				<td><a href="{{$v}}" target="_blank">{{$v}}</a>
+			</tr>
+			{{end}}
+		</tbody>
+	</table>
 	</body>
 </html>`
 
