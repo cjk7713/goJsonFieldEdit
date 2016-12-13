@@ -206,8 +206,8 @@ func main() {
 		logger.Fatalln("Parse list service template: ", err)
 	}
 
-	http.HandleFunc("/add/", addService)
-	http.HandleFunc("/del/", delService)
+	http.HandleFunc("/add", addService)
+	http.HandleFunc("/del", delService)
 	http.HandleFunc("/", showList)
 
 	err = http.ListenAndServe(":"+*port, nil)
