@@ -9,14 +9,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
 )
 
+// ServiceStruct 注册的服务
 type ServiceStruct struct {
 	Services map[string]string
 }
+
+// SecureMap 并发安全的map
 type SecureMap struct {
 	m map[string]string
 	sync.Mutex
@@ -153,7 +157,13 @@ func addService(resp http.ResponseWriter, req *http.Request) {
 		io.WriteString(resp, "{\"status\": \"false\", \"msg\": \"wrong query string\"}")
 		return
 	}
-	registeredService.set(serviceName[0], serviceURL[0])
+	tURL, err := url.QueryUnescape(serviceURL[0])
+	if err != nil {
+		resp.WriteHeader(http.StatusBadRequest)
+		io.WriteString(resp, "{\"status\": \"false\", \"msg\": \"url参数值不合法\"}")
+		return
+	}
+	registeredService.set(serviceName[0], tURL)
 
 	resp.WriteHeader(http.StatusOK)
 	io.WriteString(resp, "{\"status\": \"true\"}")
