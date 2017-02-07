@@ -245,7 +245,7 @@ func _checkStatus(url string) string {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= http.StatusInternalServerError {
 		log.Println("ERROR:", fmt.Errorf("非正常响应，响应码为：%d", resp.StatusCode))
 		return "off"
 	}
