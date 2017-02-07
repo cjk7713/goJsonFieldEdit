@@ -13,16 +13,24 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
+
+	"github.com/rakyll/coop"
 )
 
-// ServiceStruct 注册的服务
-type ServiceStruct struct {
-	Services map[string]string
+type serviceStatusT struct {
+	URL    string
+	Status string
+}
+
+// serviceT 注册的服务
+type serviceT struct {
+	Services map[string]serviceStatusT
 }
 
 // SecureMap 并发安全的map
 type SecureMap struct {
-	m map[string]string
+	m map[string]serviceStatusT
 	sync.Mutex
 }
 
@@ -51,6 +59,12 @@ const listTpl = `<!DOCTYPE html>
 				background-color: #E5F2F7;
 				color: #205F8E;
 			}
+			.status-on {
+				color: green;
+			}
+			.status-off {
+				color: red;
+			}
 		</style>
 	</head>
 	<body>
@@ -60,13 +74,15 @@ const listTpl = `<!DOCTYPE html>
 			<tr>
 				<th>服务名称</th>
 				<th>服务地址</th>
+				<th>服务状态</th>
 			</tr>
 		</thead>
 		<tbody>
 			{{range $k, $v := .Services}}
 			<tr>
 				<td>{{$k}}</td>
-				<td><a href="{{$v}}" target="_blank">{{$v}}</a>
+				<td><a href="{{$v.URL}}" target="_blank">{{$v.URL}}</a></td>
+				<td class="status-{{$v.Status}}">{{$v.Status}}</td>
 			</tr>
 			{{end}}
 		</tbody>
@@ -78,10 +94,29 @@ var listTplVar *template.Template
 
 var registeredService *SecureMap
 
-func (m *SecureMap) set(key string, value string) {
+func (m *SecureMap) setURL(key string, url string) {
 	m.Lock()
 	defer m.Unlock()
-	m.m[key] = value
+	v, ok := m.m[key]
+	if ok {
+		v.URL = url
+	} else {
+		v = serviceStatusT{url, "off"}
+	}
+	m.m[key] = v
+	// 同时写文件保存
+	saveRegisterService()
+}
+
+func (m *SecureMap) setStatus(key string, status string) {
+	m.Lock()
+	defer m.Unlock()
+	v, ok := m.m[key]
+	if !ok {
+		return
+	}
+	v.Status = status
+	m.m[key] = v
 	// 同时写文件保存
 	saveRegisterService()
 }
@@ -99,7 +134,7 @@ func (m *SecureMap) del(key string) bool {
 	return true
 }
 
-func (m *SecureMap) getMap() map[string]string {
+func (m *SecureMap) getMap() map[string]serviceStatusT {
 	return m.m
 }
 
@@ -123,7 +158,7 @@ func saveRegisterService() {
 	return
 }
 
-func loadRegisterService() (services map[string]string) {
+func loadRegisterService() (services map[string]serviceStatusT) {
 	content, err := ioutil.ReadFile(dbFilePath)
 	if err != nil {
 		logger.Println(err)
@@ -163,7 +198,7 @@ func addService(resp http.ResponseWriter, req *http.Request) {
 		io.WriteString(resp, "{\"status\": \"false\", \"msg\": \"url参数值不合法\"}")
 		return
 	}
-	registeredService.set(serviceName[0], tURL)
+	registeredService.setURL(serviceName[0], tURL)
 
 	resp.WriteHeader(http.StatusOK)
 	io.WriteString(resp, "{\"status\": \"true\"}")
@@ -192,11 +227,37 @@ func delService(resp http.ResponseWriter, req *http.Request) {
 func showList(resp http.ResponseWriter, req *http.Request) {
 	services := registeredService.getMap()
 	resp.WriteHeader(http.StatusOK)
-	err := listTplVar.Execute(resp, ServiceStruct{Services: services})
+	err := listTplVar.Execute(resp, serviceT{Services: services})
 	if err != nil {
 		logger.Printf("Execute template: %s", err)
 	}
 	return
+}
+
+func _checkStatus(url string) string {
+	hc := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := hc.Get(url)
+	if err != nil {
+		log.Println("ERROR:", err)
+		return "off"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Println("ERROR:", fmt.Errorf("非正常响应，响应码为：%d", resp.StatusCode))
+		return "off"
+	}
+	return "on"
+}
+
+func serviceStatusChecker() {
+	coop.Every(5*time.Second, func() {
+		for k, v := range registeredService.getMap() {
+			registeredService.setStatus(k, _checkStatus(v.URL))
+		}
+	})
 }
 
 func main() {
@@ -208,13 +269,16 @@ func main() {
 	var err error
 	services := loadRegisterService()
 	if services == nil {
-		services = make(map[string]string)
+		services = make(map[string]serviceStatusT)
 	}
 	registeredService = &SecureMap{m: services}
 	listTplVar, err = template.New("list-service").Parse(listTpl)
 	if err != nil {
 		logger.Fatalln("Parse list service template: ", err)
 	}
+
+	//
+	go serviceStatusChecker()
 
 	http.HandleFunc("/add", addService)
 	http.HandleFunc("/del", delService)
