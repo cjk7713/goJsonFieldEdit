@@ -1,7 +1,10 @@
-# Bulletin - æœåŠ¡å…¬å‘Šæ¿
+Ä£°å¹¤¾ß
+Json²Ù×÷
+api²Ù×÷
 
-> ä¸“ä¸ºå·¥å…·åˆ¶é€ çˆ±å¥½è€…å‡†å¤‡ï¼
 
-- æµè§ˆURLï¼š`/`
-- æœåŠ¡æ·»åŠ APIï¼š`/add/`ï¼Œå‚æ•°`name` - æœåŠ¡åï¼ˆéœ€å”¯ä¸€ï¼‰ï¼Œå‚æ•°`url` - æœåŠ¡åœ°å€
-- æœåŠ¡åˆ é™¤APIï¼š`/del/`ï¼Œå‚æ•°`name` - æœåŠ¡å
+> ×¨Îª¹¤¾ßÖÆÔì°®ºÃÕß×¼±¸£¡
+
+- ä¯ÀÀURL£º`/`
+- ·þÎñÌí¼ÓAPI£º`/add/`£¬²ÎÊý`name` - ·þÎñÃû£¨ÐèÎ¨Ò»£©£¬²ÎÊý`url` - ·þÎñµØÖ·
+- ·þÎñÉ¾³ýAPI£º`/del/`£¬²ÎÊý`name` - ·þÎñÃû
