@@ -265,7 +265,7 @@ func main() {
 	dbFilePath = filepath.Join(appRoot, "services.json")
 	port := flag.String("p", "8087", "port to run the web server")
 	logger = getLogger()
-
+	fmt.Println("start server listen by port 8087")
 	var err error
 	services := loadRegisterService()
 	if services == nil {
